@@ -1,4 +1,4 @@
-# antiviral_sim
+# Influenza antiviral treatment population model
 Simulation study comparing antiviral treatment strategies for a hypothetical influenza season
 
 Code is in the model_code folder.
