@@ -1,19 +1,22 @@
 # antiviral_sim
 Simulation study comparing antiviral treatment strategies for a hypothetical influenza season
 
-Script 0
-- Creates some parameter inputs using code from this repo: https://github.com/CDCgov/flu-vaccine-model
+Code is in the model_code folder.
 
-Script 1
+0_create_contact_matrix.R
+- Creates some parameter inputs using code from this repo: https://github.com/CDCgov/flu-vaccine-model
+- No one should really need to run this. I didn't add the scripts from the other repo since the needed outputs are saved in the inputs folder already.
+
+1_set_fixed_params.R
 - Sets parameters that do not change across simulation scenarios
 
-Script 2
+2_set_scenario_params.R
 - Sets scenario specific parameters (e.g. defines ranges considered for transmissibility, antiviral effectiveness, etc)
 
-Script 3
+3_create_model_function.R
 - Function with ordinary differential equations defining state transitions for compartmental model
 
-Script 4
+4_generate_output.R
 - Calls the prior scripts to create parameters and model
 - Runs model for all parameter sets, generates and saves output
 
