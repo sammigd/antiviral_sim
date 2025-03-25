@@ -6,9 +6,9 @@ library(tidyverse)
 library(readxl)
 library(here)
 
-source(here('model code/0_create_contact_matrix.R'))
-source(here('model code/1_set_fixed_params.R'))
-source(here('model code/3_create_model_function.R'))
+source(here('model_code/0_create_contact_matrix.R'))
+source(here('model_code/1_set_fixed_params.R'))
+source(here('model_code/3_create_model_function.R'))
 
 
 #enumerate scenarios of interest
@@ -26,7 +26,7 @@ names(res_ecurve) = c('times', 'severity', 'transmission', 'AVScenario')
 for(s_scenario in severity_scenarios){
   for(antiviral_scenario in antiviral_scenarios){
     for (t_scenario in transmis_scenarios){
-      source('model code/2_set_scenario_params.R')                          #set parameters matching the loop 
+      source('model_code/2_set_scenario_params.R')                          #set parameters matching the loop 
       tmp_params = c(betas_noav, betas_late, betas_nonad, betas_ontime,     #generate input list for the model fn
                      gamma, 
                      rho_r, rho_noav, rho_late, rho_ontime, rho_nonad,

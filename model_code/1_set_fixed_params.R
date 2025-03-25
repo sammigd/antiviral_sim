@@ -3,12 +3,12 @@
 ##############################################################################
 
 # GET POPULATION AGE DISTRIBUTION ################
-load('age_fracs.RData') #created in script 0
-load('popsize.RData') #total pop denominator
+load('inputs/age_fracs.RData') #created in script 0
+load('inputs/popsize.RData') #total pop denominator
 
 
 # GET POPULATION CONTACT MATRIX ##################
-load('contact_matrix.RData') #created in script 0
+load('inputs/contact_matrix.RData') #created in script 0
 
 # COLLAPSE 5-12 AND 13-17 INTO A SINGLE AGE GROUP #
 age_fracs_combined = c(age_fracs['0-4'], age_fracs['5-12'] + age_fracs['13-17'], age_fracs[c('18-49', '50-64', '65+')])

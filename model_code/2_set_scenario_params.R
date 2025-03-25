@@ -1,13 +1,3 @@
-##################################################
-# PICK SCENARIO ##################################
-##################################################
-#severity_scenarios = c('Mild', 'Severe')
-#scenario = severity_scenarios[1]
-
-#antiviral_scenarios = c(0, # baseline - noav
-#                        1, # baseline - observed (os)
-#                        2) # baseline - baloxavir
-#antiviral_scenario = antiviral_scenarios[1]
 
 
 ##################################################
