@@ -6,44 +6,59 @@
 
 #SAR HARDCODED IN FROM UNPUBLISHED SAR IMPUTATION WORK
 #for age groups 0-4, 5-17, 18-49, 50-64,50+
-if(antiviral_scenario == 0){
-  SAR_flutes = c(0.21, 0.14, 0.19, 0.25, 0.25)
-}
+SAR_flutes = c(runif(1, 0.11, 0.34), # ranges from sinead appendix table
+               runif(1, 0.12, 0.44),
+               runif(1, 0.06, 0.14), 
+               runif(1, 0.07, 0.18),
+               runif(1, 0.02, 0.09))
+
+SAR_flutes = c(0.21, 0.14, 0.19, 0.25, 0.25)
 
 
-if(t_scenario == 'High'){
-  sar_adj_noav = .0835
-  sar_adj_os = .0435
-}
+SAR_flutes = c(runif(1, 0.21 - 0.01, 0.21 + 0.01), # flutes est + arbitrary ranges
+               runif(1, 0.14 - 0.01, 0.14 + 0.01),
+               runif(1, 0.19 - 0.01, 0.19 + 0.01), 
+               runif(1, 0.25 - 0.01, 0.25 + 0.01),
+               runif(1, 0.25 - 0.01, 0.25 + 0.01))
 
-if(t_scenario == 'Low'){
-  sar_adj_noav = .082
-  sar_adj_os = .042
-}
 
+
+
+# TOGGLE EFFECT OF AV ON TRANSMISSIBILITY
+if(av_ie_scenario == 0 ){av_transmissibility_adj = 1}
+if(av_ie_scenario == 50){av_transmissibility_adj = 0.5}
+
+# TOGGLE BASELINE TRANSMISSIBILITY OF SEASON
+if(t_scenario == 'High'  ){sar_adj_noav = .086}
+if(t_scenario == 'Medium'){sar_adj_noav = .085}
+if(t_scenario == 'Low'   ){sar_adj_noav = .084}
+
+# CALC TRANSMISSIBILITY INPUTS BASED ON SELECTIONS
+sar_adj_os = sar_adj_noav*av_transmissibility_adj
 SAR_fromage_noav = SAR_flutes*sar_adj_noav
-
-if(antiviral_scenario %in% c(0,1)){
-  SAR_fromage_os = SAR_flutes*sar_adj_os
-}
-if(antiviral_scenario == 2){ #bx
-  SAR_fromage_os = SAR_flutes*sar_adj_os*.5
-}
+SAR_fromage_os = SAR_flutes*sar_adj_os
 
 #formula: beta = (num contacts per unit * prob transmission per contact) / N
 betas_noav = (SAR_fromage_noav * contacts_combined) / age_pop_size #ops broadcast by column
-betas_ontime = (SAR_fromage_os * contacts_combined) / age_pop_size
+betas_ad = (SAR_fromage_os * contacts_combined) / age_pop_size
 betas_late = betas_noav
-betas_nonad = betas_noav
+betas_part = betas_noav
 
 
+if(antiviral_scenario == 0){
+  betas_ad = betas_noav
+}
 
 ##################################################
 # CARE SEEKING #
 ##################################################
 
-                                         # from sineads appendix
-p_seekcare = c(0.3, 0.3, .425, 0.5, 0.5) # non high risk
+# from sineads appendix
+p_seekcare = c(runif(1, 0.25, 0.35), 
+               runif(1, 0.25, 0.35), 
+               runif(1, 0.35, 0.50), 
+               runif(1, 0.45, 0.55), 
+               runif(1, 0.45, 0.55))     # non high risk
 p_seekcare_hr = p_seekcare * 1.27        # high risk (1.27 is hr to std risk ratio from matt's paper, similar to 3 from sinead's appendix)
 
 p_hr = c(0.05, 0.10, 0.20, 0.35, 0.55) # prob of high risk by age group
@@ -53,101 +68,122 @@ p_seekcare_avg = p_seekcare * p_lr + p_seekcare_hr * p_hr  #avg probability of s
 
 p_nocare = 1-p_seekcare_avg
 
-p_ontime_given_seekcare = .34 # from matt's paper https://pmc.ncbi.nlm.nih.gov/articles/PMC4610008/table/T5/
+#p_ontime_given_seekcare = .34 # from matt's paper https://pmc.ncbi.nlm.nih.gov/articles/PMC4610008/table/T5/
+p_ontime_given_seekcare = c(runif(1, 0.45, 0.55),
+                            runif(1, 0.45, 0.55),
+                            runif(1, 0.45, 0.55), 
+                            runif(1, 0.40, 0.50),
+                            runif(1, 0.35, 0.45))
 p_late_given_seekcare = 1 - p_ontime_given_seekcare                       # about the same for lr versus hr
 
+###############################################
+# CARE SEEKING PROBABILITIES #
+###############################################
+p_adherence = .5
 
-
-#################################################
-# AV PRESCRIBING PARAMETERS #
-#################################################
-
-if(antiviral_scenario == 0){ #baseline - no antivirals
-  p_seekcare_anyav = p_seekcare * 0
+p_adav_given_ontime = .55 * p_adherence
+p_part_given_ontime = .55 * (1- p_adherence)
+p_noav_given_ontime = 1 - (p_adav_given_ontime + p_part_given_ontime)
   
-  p_seekcare_ontime = p_seekcare * 0
-  p_seekcare_nonad = p_seekcare * 0
-  p_seekcare_late = p_seekcare * 0
-  p_seekcare_noav = p_seekcare * 1
-}
+p_av_given_late = .35
+p_noav_given_late = 1 - p_av_given_late
+  
+p_time_adav = p_adav_given_ontime * p_ontime_given_seekcare * p_seekcare_avg
+p_time_part = p_part_given_ontime * p_ontime_given_seekcare * p_seekcare_avg 
+p_time_noav = p_noav_given_ontime * p_ontime_given_seekcare * p_seekcare_avg
 
-if(antiviral_scenario == 1){ #baseline - observed antivirals
+p_late_av = p_av_given_late * p_late_given_seekcare * p_seekcare_avg
+p_late_noav = p_noav_given_late * p_late_given_seekcare * p_seekcare_avg
   
-  #set amount of nonadherence
-  p_adherence_given_ontime = .5
-  p_nonadherence_given_ontime = 1-p_adherence_given_ontime
-  
-  #set av prescribing of care seeking
-  p_seekcare_anyav = .5 #p av | seek care
-  
-  #calculate probabilities for each treatment bin
-  p_seekcare_ontime = p_seekcare_avg * p_seekcare_anyav * p_ontime_given_seekcare * p_adherence_given_ontime      # * p adherence
-  p_seekcare_nonad =  p_seekcare_avg * p_seekcare_anyav * p_ontime_given_seekcare * p_nonadherence_given_ontime   # * p nonadherence
-  p_seekcare_late =   p_seekcare_avg * p_late_given_seekcare * p_seekcare_anyav
-  p_seekcare_noav =   p_seekcare_avg * (1- p_seekcare_anyav) #0.297
-}
-
-if(antiviral_scenario == 2){ #baseline - baloxavir
-  
-  #set amount of nonadherence - with bx 100% adherence bc one pill
-  p_adherence_given_ontime = 1
-  p_nonadherence_given_ontime = 1-p_adherence_given_ontime
-  
-  #set av prescribing of care seeking
-  p_seekcare_anyav = .5 #p av | seek care
-  
-  #calculate probabilities for each treatment bin
-  p_seekcare_ontime = p_seekcare_avg * p_seekcare_anyav * p_ontime_given_seekcare * p_adherence_given_ontime      # * p adherence
-  p_seekcare_nonad =  p_seekcare_avg * p_seekcare_anyav * p_ontime_given_seekcare * p_nonadherence_given_ontime   # * p nonadherence
-  p_seekcare_late =   p_seekcare_avg * p_late_given_seekcare * p_seekcare_anyav
-  p_seekcare_noav =   p_seekcare_avg * (1- p_seekcare_anyav) 
-}
-
-#calc parms for Iudx to Idx
-rho_noav = p_seekcare_noav / udx_to_care_pd
-rho_late = p_seekcare_late / udx_to_care_pd
-rho_nonad = p_seekcare_nonad / udx_to_care_pd
-rho_ontime = p_seekcare_ontime / udx_to_care_pd
-rho_r = p_nocare / udx_to_r_pd #dummy
+p_nocare_noav = p_nocare
 
 
-#rates from care seeking infected to recovered
-mu_ontime1 = 1/av_rec_pd
-mu_nonad1 = 1/noav_rec_pd
-mu_late1 = 1/noav_rec_pd
-mu_noav1 = 1/noav_rec_pd
+################################################
+# RHOS - Isym to treatment classes #
+################################################
+pd_to_ontime_care = 1.5
+pd_to_late_care = 2.9
+pd_to_no_care = 1.5
+
+rho_time_adav = p_time_adav / pd_to_ontime_care
+rho_time_part = p_time_part / pd_to_ontime_care
+rho_time_noav = p_time_noav / pd_to_ontime_care
+
+rho_late_av = p_late_av / pd_to_late_care
+rho_late_noav = p_late_noav / pd_to_late_care
+
+rho_nocare_noav = p_nocare_noav / pd_to_no_care
+
+############################################### 
+# RHO - Iasym to R #
+###############################################
+pd_asym_to_r = 3
+rho_asym_r = 1/pd_asym_to_r
+
+###############################################
+# MUs - treatment classes to recovered #
+###############################################
+pd_inf_post_ontime = 1.5
+pd_inf_post_late = 0.1
+pd_inf_post_nocare = 1.5
+
+mu_time_adav = 1/pd_inf_post_ontime  #these three mu's do not need to be same
+mu_time_part = 1/pd_inf_post_ontime
+mu_time_noav = 1/pd_inf_post_ontime
+
+mu_late_av = 1/pd_inf_post_late
+mu_late_noav = 1/pd_inf_post_late
+
+mu_nocare_noav = 1/pd_inf_post_nocare
+
 
 #############################################################################
 # SET CASE HOSP RATIO AND CASE FATALITY RATIO #
 #############################################################################
 
-chr_by_age = c(143.44, 364.71, 178.16, 94.3, 11)                              #FROM FLU BURDEN DASH
-deathhr_by_age = c(0.0132185, 0.0099303, 0.0294699, 0.0594536, 0.080231)      #FROM FLU BURDEN DASH
+chr_by_age = c(143.44, 364.71, 178.16, 94.3, 11)                                #FROM FLU BURDEN DASH
+deathhr_by_age = c(0.0132185, 0.0099303, 0.0294699, 0.0594536, 0.080231)        #FROM FLU BURDEN DASH
 
-if(s_scenario == 'Mild'){
-  chr_by_age_use = 1*chr_by_age
-  deathhr_by_age_use = 1*deathhr_by_age
-}
-if(s_scenario == 'Severe'){
-  chr_by_age_use = 1.5*chr_by_age
-  deathhr_by_age_use = 1.5*deathhr_by_age
-}
+# TOGGLE BASELINE HOSP AND MORTALITY RATES
+if(s_scenario == 'Mild'  ){chr_multiplier = 1}
+if(s_scenario == 'Severe'){chr_multiplier = 1.5}
+
+# CALC CHR AND CFR
+chr_by_age_use = chr_multiplier*chr_by_age
+deathhr_by_age_use = chr_multiplier*deathhr_by_age
 
 #CHR MULTIPLIERS BY TREATMENT
-if(antiviral_scenario %in% c(0,1)){ #no av, os scenarios
-  Inoav_chr_multiplier = 1
-  Inonad_chr_multiplier = 1
-  Ilate_chr_multiplier = 1
-  Iontime_chr_multiplier = .8                                                   #sinead varies from .2 to .75 (this is 1-that)
-  Iudx_chr_multiplier = 1
+if(antiviral_scenario == 0){ #no av
+  Itime_adav_chr_multiplier = 1                                                 #sinead varies from .2 to .75 (this is 1-that)
+  Itime_part_chr_multiplier = 1
+  Itime_noav_chr_multiplier = 1
+  
+  Ilate_av_chr_multiplier = 1
+  Ilate_noav_chr_multiplier = 1
+  
+  Inocare_noav_chr_multiplier = 1
+}
+
+if(antiviral_scenario == 1){ #os scenarios
+  Itime_adav_chr_multiplier = 0.8                                               #sinead varies from .2 to .75 (this is 1-that)
+  Itime_part_chr_multiplier = 1
+  Itime_noav_chr_multiplier = 1
+  
+  Ilate_av_chr_multiplier = 1
+  Ilate_noav_chr_multiplier = 1
+  
+  Inocare_noav_chr_multiplier = 1
 }
 
 
 
-if(antiviral_scenario == 2){ #bx scenario
-  Inoav_chr_multiplier = 1
-  Inonad_chr_multiplier = 1
-  Ilate_chr_multiplier = 1
-  Iontime_chr_multiplier = .75                                                   #sinead varies from .2 to .75 (this is 1-that)
-  Iudx_chr_multiplier = 1
-}
+#########################################
+# set asymptomatic proportion
+########################################
+pd_latent = 1.5
+
+p_asym = .3
+p_sym = 1-p_asym
+
+gamma_sym = p_sym / pd_latent 
+gamma_asym = p_asym / pd_latent

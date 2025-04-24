@@ -26,23 +26,6 @@ contacts_combined = contacts_intermediate[-3,]
 #get pop size by age group
 age_pop_size = popsize*age_fracs_combined
 
-##############################################################################
-# SET DURATIONS IN EACH COMPARTMENT - FIXED 
-##############################################################################
-#rate of exposed to infected (1/ latent period)
-latent_pd = 1.5
-gamma = 1 / latent_pd #days
-
-#rate from undiagnosed infected to recovered
-udx_to_r_pd = 3
-
-#rates from undiagnosed infectious to care seeking infectious
-udx_to_care_pd = 2.5 #days infectious before seeking care
-
-#rates from care seeking infected to recovered
-noav_rec_pd = .5
-av_rec_pd = .5
-
 
 ##############################################################################
 # SET INITIAL CONDITIONS OF MODEL #
@@ -61,15 +44,21 @@ state0 <- c(S1 = N_byage[1]-1000,
             E3 = 0,
             E4 = 0, 
             E5 = 0,
-            Iudx1 = 1000, Iudx2 = 1000, Iudx3 = 1000, Iudx4 = 1000, Iudx5 = 1000,
-            Iontime1 = 0, Iontime2 = 0, Iontime3 = 0, Iontime4 = 0, Iontime5 = 0, 
-            Ilate1 = 0, Ilate2 = 0, Ilate3 = 0, Ilate4 = 0, Ilate5 = 0, 
-            Inonad1 = 0, Inonad2 = 0, Inonad3 = 0, Inonad4 = 0, Inonad5 = 0, 
-            Inoav1 = 0, Inoav2 = 0, Inoav3 = 0, Inoav4 = 0, Inoav5 = 0,
+            Isym_udx1 = 500, Isym_udx2 = 500, Isym_udx3 = 500, Isym_udx4 = 500, Isym_udx5 = 500,
+            Iasym_udx1 = 500, Iasym_udx2 = 500, Iasym_udx3 = 500, Iasym_udx4 = 500, Iasym_udx5 = 500,
+            Itime_adav1 = 0, Itime_adav2 = 0, Itime_adav3 = 0, Itime_adav4 = 0, Itime_adav5 = 0,
+            Itime_part1 = 0, Itime_part2 = 0, Itime_part3 = 0, Itime_part4 = 0, Itime_part5 = 0,
+            Itime_noav1 = 0, Itime_noav2 = 0, Itime_noav3 = 0, Itime_noav4 = 0, Itime_noav5 = 0,
+            Ilate_av1 = 0, Ilate_av2 = 0, Ilate_av3 = 0, Ilate_av4 = 0, Ilate_av5 = 0,
+            Ilate_noav1 = 0, Ilate_noav2 = 0, Ilate_noav3 = 0, Ilate_noav4 = 0, Ilate_noav5 = 0,
+            Inocare_noav1 = 0, Inocare_noav2 = 0, Inocare_noav3 = 0, Inocare_noav4 = 0, Inocare_noav5 = 0,
             R1 = 0, R2 = 0, R3 = 0, R4 = 0, R5 = 0,
-            count_Inoav1_to_R = 0, count_Inoav2_to_R = 0, count_Inoav3_to_R = 0, count_Inoav4_to_R = 0, count_Inoav5_to_R = 0,
-            count_Ilate1_to_R = 0, count_Ilate2_to_R = 0, count_Ilate3_to_R = 0, count_Ilate4_to_R = 0, count_Ilate5_to_R = 0,
-            count_Inonad1_to_R = 0, count_Inonad2_to_R = 0, count_Inonad3_to_R = 0, count_Inonad4_to_R = 0, count_Inonad5_to_R = 0,
-            count_Iontime1_to_R = 0, count_Iontime2_to_R = 0, count_Iontime3_to_R = 0, count_Iontime4_to_R = 0, count_Iontime5_to_R = 0,
-            count_Iudx1_to_R = 0, count_Iudx2_to_R = 0, count_Iudx3_to_R = 0, count_Iudx4_to_R = 0, count_Iudx5_to_R = 0)
+            count_Itime_adav1_to_R = 0, count_Itime_adav2_to_R = 0, count_Itime_adav3_to_R = 0, count_Itime_adav4_to_R = 0, count_Itime_adav5_to_R = 0,
+            count_Itime_part1_to_R = 0, count_Itime_part2_to_R = 0, count_Itime_part3_to_R = 0, count_Itime_part4_to_R = 0, count_Itime_part5_to_R = 0,
+            count_Itime_noav1_to_R = 0, count_Itime_noav2_to_R = 0, count_Itime_noav3_to_R = 0, count_Itime_noav4_to_R = 0, count_Itime_noav5_to_R = 0,
+            count_Ilate_av1_to_R = 0, count_Ilate_av2_to_R = 0, count_Ilate_av3_to_R = 0, count_Ilate_av4_to_R = 0, count_Ilate_av5_to_R = 0,
+            count_Ilate_noav1_to_R = 0, count_Ilate_noav2_to_R = 0, count_Ilate_noav3_to_R = 0, count_Ilate_noav4_to_R = 0, count_Ilate_noav5_to_R = 0,
+            count_Inocare_noav1_to_R = 0, count_Inocare_noav2_to_R = 0, count_Inocare_noav3_to_R = 0, count_Inocare_noav4_to_R = 0, count_Inocare_noav5_to_R = 0,
+            count_Iasym_udx1_to_R = 0, count_Iasym_udx2_to_R = 0, count_Iasym_udx3_to_R = 0, count_Iasym_udx4_to_R = 0, count_Iasym_udx5_to_R = 0
+)
 
