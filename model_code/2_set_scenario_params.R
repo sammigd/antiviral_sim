@@ -12,26 +12,32 @@ SAR_flutes = c(runif(1, 0.11, 0.34), # ranges from sinead appendix table
                runif(1, 0.07, 0.18),
                runif(1, 0.02, 0.09))
 
-SAR_flutes = c(0.21, 0.14, 0.19, 0.25, 0.25)
-
-
 SAR_flutes = c(runif(1, 0.21 - 0.01, 0.21 + 0.01), # flutes est + arbitrary ranges
                runif(1, 0.14 - 0.01, 0.14 + 0.01),
                runif(1, 0.19 - 0.01, 0.19 + 0.01), 
                runif(1, 0.25 - 0.01, 0.25 + 0.01),
                runif(1, 0.25 - 0.01, 0.25 + 0.01))
 
+SAR_flutes = c(0.21, 0.14, 0.19, 0.25, 0.25)
 
+#########################################
+scenario_tab = read.csv('inputs/scenarios.csv', row.names = 1)
+epi_scenarios = names(scenario_tab)
 
+av_transmissibility_adj   = scenario_tab['av_transmissibility_adj', epi_scenario]
+sar_adj_noav              = scenario_tab['sar_adj_noav', epi_scenario]
+p_adherence               = scenario_tab['p_adherence', epi_scenario]
+chr_multiplier            = scenario_tab['chr_multiplier', epi_scenario]
+Itime_adav_chr_multiplier = scenario_tab['Itime_adav_chr_multiplier', epi_scenario]
 
 # TOGGLE EFFECT OF AV ON TRANSMISSIBILITY
-if(av_ie_scenario == 0 ){av_transmissibility_adj = 1}
-if(av_ie_scenario == 50){av_transmissibility_adj = 0.5}
+#if(av_ie_scenario == 0 ){av_transmissibility_adj = 1}
+#if(av_ie_scenario == 50){av_transmissibility_adj = 0.5}
 
 # TOGGLE BASELINE TRANSMISSIBILITY OF SEASON
-if(t_scenario == 'High'  ){sar_adj_noav = .086}
-if(t_scenario == 'Medium'){sar_adj_noav = .085}
-if(t_scenario == 'Low'   ){sar_adj_noav = .084}
+#if(t_scenario == 'High'  ){sar_adj_noav = .086}
+#if(t_scenario == 'Medium'){sar_adj_noav = .085}
+#if(t_scenario == 'Low'   ){sar_adj_noav = .084}
 
 # CALC TRANSMISSIBILITY INPUTS BASED ON SELECTIONS
 sar_adj_os = sar_adj_noav*av_transmissibility_adj
@@ -41,11 +47,11 @@ SAR_fromage_os = SAR_flutes*sar_adj_os
 #formula: beta = (num contacts per unit * prob transmission per contact) / N
 betas_noav = (SAR_fromage_noav * contacts_combined) / age_pop_size #ops broadcast by column
 betas_ad = (SAR_fromage_os * contacts_combined) / age_pop_size
-betas_late = betas_noav
+betas_late = matrix(0, 5, 5) #betas_noav
 betas_part = betas_noav
 
 
-if(antiviral_scenario == 0){
+if(epi_scenario %in% c('lowtrans_baseline', 'hightrans_baseline')){
   betas_ad = betas_noav
 }
 
@@ -101,9 +107,9 @@ p_nocare_noav = p_nocare
 ################################################
 # RHOS - Isym to treatment classes #
 ################################################
-pd_to_ontime_care = 1.5
-pd_to_late_care = 2.9
-pd_to_no_care = 1.5
+pd_to_ontime_care = rnormTrunc(1, mean = 0.7 + 1.4 , sd = .2, min = 0, max = 2) #runif(1, 0.2, 2) #1.5
+pd_to_late_care = rnorm(1, 2.7, .4) #runif(1, 2, 4)     #2.9
+pd_to_no_care = 2 #runif(1, 0.2, 2.3)   #dummy
 
 rho_time_adav = p_time_adav / pd_to_ontime_care
 rho_time_part = p_time_part / pd_to_ontime_care
@@ -117,15 +123,15 @@ rho_nocare_noav = p_nocare_noav / pd_to_no_care
 ############################################### 
 # RHO - Iasym to R #
 ###############################################
-pd_asym_to_r = 3
+pd_asym_to_r = 2.7 #runif(1, 1.9, 3.7) #3
 rho_asym_r = 1/pd_asym_to_r
 
 ###############################################
 # MUs - treatment classes to recovered #
 ###############################################
-pd_inf_post_ontime = 1.5
-pd_inf_post_late = 0.1
-pd_inf_post_nocare = 1.5
+pd_inf_post_ontime = .6 #max(0.01, 2.7 - pd_to_ontime_care) #runif(1, 1.7, 2.4)
+pd_inf_post_late = 0.01 #runif(1, 0.01, 0.4) #0.1
+pd_inf_post_nocare = 1 #runif(1, 1.7, 2.4) #1.5
 
 mu_time_adav = 1/pd_inf_post_ontime  #these three mu's do not need to be same
 mu_time_part = 1/pd_inf_post_ontime
@@ -133,7 +139,6 @@ mu_time_noav = 1/pd_inf_post_ontime
 
 mu_late_av = 1/pd_inf_post_late
 mu_late_noav = 1/pd_inf_post_late
-
 mu_nocare_noav = 1/pd_inf_post_nocare
 
 
@@ -145,37 +150,22 @@ chr_by_age = c(143.44, 364.71, 178.16, 94.3, 11)                                
 deathhr_by_age = c(0.0132185, 0.0099303, 0.0294699, 0.0594536, 0.080231)        #FROM FLU BURDEN DASH
 
 # TOGGLE BASELINE HOSP AND MORTALITY RATES
-if(s_scenario == 'Mild'  ){chr_multiplier = 1}
-if(s_scenario == 'Severe'){chr_multiplier = 1.5}
+#if(s_scenario == 'Mild'  ){chr_multiplier = 1}
+#if(s_scenario == 'Severe'){chr_multiplier = 1.5}
 
 # CALC CHR AND CFR
 chr_by_age_use = chr_multiplier*chr_by_age
 deathhr_by_age_use = chr_multiplier*deathhr_by_age
 
 #CHR MULTIPLIERS BY TREATMENT
-if(antiviral_scenario == 0){ #no av
-  Itime_adav_chr_multiplier = 1                                                 #sinead varies from .2 to .75 (this is 1-that)
-  Itime_part_chr_multiplier = 1
-  Itime_noav_chr_multiplier = 1
-  
-  Ilate_av_chr_multiplier = 1
-  Ilate_noav_chr_multiplier = 1
-  
-  Inocare_noav_chr_multiplier = 1
-}
+#Itime_adav_chr_multiplier = 1                                                 #sinead varies from .2 to .75 (this is 1-that)
+Itime_part_chr_multiplier = 1
+Itime_noav_chr_multiplier = 1
 
-if(antiviral_scenario == 1){ #os scenarios
-  Itime_adav_chr_multiplier = 0.8                                               #sinead varies from .2 to .75 (this is 1-that)
-  Itime_part_chr_multiplier = 1
-  Itime_noav_chr_multiplier = 1
-  
-  Ilate_av_chr_multiplier = 1
-  Ilate_noav_chr_multiplier = 1
-  
-  Inocare_noav_chr_multiplier = 1
-}
+Ilate_av_chr_multiplier = 1
+Ilate_noav_chr_multiplier = 1
 
-
+Inocare_noav_chr_multiplier = 1
 
 #########################################
 # set asymptomatic proportion

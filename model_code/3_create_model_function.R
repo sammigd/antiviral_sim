@@ -10,6 +10,7 @@ flu.model <- function(t, state, parameters){
     betas_ad   = betas_ad   * (1 + .1*sin(2*pi*(t/365)))
     betas_late = betas_late * (1 + .1*sin(2*pi*(t/365)))
     betas_part = betas_part * (1 + .1*sin(2*pi*(t/365)))
+    betas_asym = 0.57*betas_noav
     
     #TOTAL POPULATION - SPLIT INTO 5 AGE GROUPS
     #             |     PREDIAGNOSIS      |        TIMELY CARE SEEKERS              |     LATE CARE SEEKERS   | NO CARE SOUGHT| RECOVERED  
@@ -19,26 +20,34 @@ flu.model <- function(t, state, parameters){
          S4 + E4 + Isym_udx4 + Iasym_udx4 + Itime_adav4 + Itime_part4 + Itime_noav4 + Ilate_av4 + Ilate_noav4 + Inocare_noav4 + R4 +
          S5 + E5 + Isym_udx5 + Iasym_udx5 + Itime_adav5 + Itime_part5 + Itime_noav5 + Ilate_av5 + Ilate_noav5 + Inocare_noav5 + R5
 
-    vec_Iall_noav = c(Iasym_udx1 + Isym_udx1 + Itime_noav1 + Ilate_noav1 + Inocare_noav1,
-                      Iasym_udx2 + Isym_udx2 + Itime_noav2 + Ilate_noav2 + Inocare_noav2,
-                      Iasym_udx3 + Isym_udx3 + Itime_noav3 + Ilate_noav3 + Inocare_noav3,
-                      Iasym_udx4 + Isym_udx4 + Itime_noav4 + Ilate_noav4 + Inocare_noav4,
-                      Iasym_udx5 + Isym_udx5 + Itime_noav5 + Ilate_noav5 + Inocare_noav5)
+    
+    N <- S1 + E1 + Isym_idx1 + Iasym_udx1 + Iavzero1 + Iavone1 + Iavtwo1 + Iavthree1 + R1 +
+         S2 + E2 + Isym_idx2 + Iasym_udx2 + Iavzero2 + Iavone2 + Iavtwo2 + Iavthree2 + R2 +
+         S3 + E3 + Isym_idx3 + Iasym_udx3 + Iavzero3 + Iavone3 + Iavtwo3 + Iavthree3 + R3 +
+         S4 + E4 + Isym_idx4 + Iasym_udx4 + Iavzero4 + Iavone4 + Iavtwo4 + Iavthree4 + R4 +
+         S5 + E5 + Isym_idx5 + Iasym_udx5 + Iavzero5 + Iavone5 + Iavtwo5 + Iavthree5 + R5 +
+    
+    vec_Iall_noav = c(Isym_udx1 + Itime_noav1 + Ilate_noav1 + Inocare_noav1,
+                      Isym_udx2 + Itime_noav2 + Ilate_noav2 + Inocare_noav2,
+                      Isym_udx3 + Itime_noav3 + Ilate_noav3 + Inocare_noav3,
+                      Isym_udx4 + Itime_noav4 + Ilate_noav4 + Inocare_noav4,
+                      Isym_udx5 + Itime_noav5 + Ilate_noav5 + Inocare_noav5)
     vec_Itime_adav = c(Itime_adav1, Itime_adav2, Itime_adav3, Itime_adav4, Itime_adav5)
+    vec_Iasym = c(Iasym_udx1, Iasym_udx2, Iasym_udx3, Iasym_udx4, Iasym_udx5)
     vec_Itime_partav = c(Itime_part1, Itime_part2, Itime_part3, Itime_part4, Itime_part5) 
     vec_Ilate_av = c(Ilate_av1, Ilate_av2, Ilate_av3, Ilate_av4, Ilate_av5)
     
-    dS1 <- -sum(betas_noav[1,]*S1*vec_Iall_noav) - sum(betas_ad[1,]*S1*vec_Itime_adav) - sum(betas_late[1,]*S1*vec_Ilate_av) - sum(betas_part[1,]*S1*vec_Itime_partav)
-    dS2 <- -sum(betas_noav[2,]*S2*vec_Iall_noav) - sum(betas_ad[2,]*S2*vec_Itime_adav) - sum(betas_late[2,]*S2*vec_Ilate_av) - sum(betas_part[2,]*S2*vec_Itime_partav)
-    dS3 <- -sum(betas_noav[3,]*S3*vec_Iall_noav) - sum(betas_ad[3,]*S3*vec_Itime_adav) - sum(betas_late[3,]*S3*vec_Ilate_av) - sum(betas_part[3,]*S3*vec_Itime_partav)
-    dS4 <- -sum(betas_noav[4,]*S4*vec_Iall_noav) - sum(betas_ad[4,]*S4*vec_Itime_adav) - sum(betas_late[4,]*S4*vec_Ilate_av) - sum(betas_part[4,]*S4*vec_Itime_partav)
-    dS5 <- -sum(betas_noav[5,]*S5*vec_Iall_noav) - sum(betas_ad[5,]*S5*vec_Itime_adav) - sum(betas_late[5,]*S5*vec_Ilate_av) - sum(betas_part[5,]*S5*vec_Itime_partav)
+    dS1 <- -sum(betas_noav[1,]*S1*vec_Iall_noav) -sum(betas_asym[1,]*S1*vec_Iasym) - sum(betas_ad[1,]*S1*vec_Itime_adav) - sum(betas_late[1,]*S1*vec_Ilate_av) - sum(betas_part[1,]*S1*vec_Itime_partav)
+    dS2 <- -sum(betas_noav[2,]*S2*vec_Iall_noav) -sum(betas_asym[2,]*S2*vec_Iasym) - sum(betas_ad[2,]*S2*vec_Itime_adav) - sum(betas_late[2,]*S2*vec_Ilate_av) - sum(betas_part[2,]*S2*vec_Itime_partav)
+    dS3 <- -sum(betas_noav[3,]*S3*vec_Iall_noav) -sum(betas_asym[3,]*S3*vec_Iasym) - sum(betas_ad[3,]*S3*vec_Itime_adav) - sum(betas_late[3,]*S3*vec_Ilate_av) - sum(betas_part[3,]*S3*vec_Itime_partav)
+    dS4 <- -sum(betas_noav[4,]*S4*vec_Iall_noav) -sum(betas_asym[4,]*S4*vec_Iasym) - sum(betas_ad[4,]*S4*vec_Itime_adav) - sum(betas_late[4,]*S4*vec_Ilate_av) - sum(betas_part[4,]*S4*vec_Itime_partav)
+    dS5 <- -sum(betas_noav[5,]*S5*vec_Iall_noav) -sum(betas_asym[5,]*S5*vec_Iasym) - sum(betas_ad[5,]*S5*vec_Itime_adav) - sum(betas_late[5,]*S5*vec_Ilate_av) - sum(betas_part[5,]*S5*vec_Itime_partav)
     
-    dE1 <-  sum(betas_noav[1,]*S1*vec_Iall_noav) + sum(betas_ad[1,]*S1*vec_Itime_adav) + sum(betas_late[1,]*S1*vec_Ilate_av) + sum(betas_part[1,]*S1*vec_Itime_partav) - gamma_asym*E1 - gamma_sym*E1
-    dE2 <-  sum(betas_noav[2,]*S2*vec_Iall_noav) + sum(betas_ad[2,]*S2*vec_Itime_adav) + sum(betas_late[2,]*S2*vec_Ilate_av) + sum(betas_part[2,]*S2*vec_Itime_partav) - gamma_asym*E2 - gamma_sym*E2
-    dE3 <-  sum(betas_noav[3,]*S3*vec_Iall_noav) + sum(betas_ad[3,]*S3*vec_Itime_adav) + sum(betas_late[3,]*S3*vec_Ilate_av) + sum(betas_part[3,]*S3*vec_Itime_partav) - gamma_asym*E3 - gamma_sym*E3
-    dE4 <-  sum(betas_noav[4,]*S4*vec_Iall_noav) + sum(betas_ad[4,]*S4*vec_Itime_adav) + sum(betas_late[4,]*S4*vec_Ilate_av) + sum(betas_part[4,]*S4*vec_Itime_partav) - gamma_asym*E4 - gamma_sym*E4
-    dE5 <-  sum(betas_noav[5,]*S5*vec_Iall_noav) + sum(betas_ad[5,]*S5*vec_Itime_adav) + sum(betas_late[5,]*S5*vec_Ilate_av) + sum(betas_part[5,]*S5*vec_Itime_partav) - gamma_asym*E5 - gamma_sym*E5
+    dE1 <-  sum(betas_noav[1,]*S1*vec_Iall_noav) + sum(betas_asym[1,]*S1*vec_Iasym) + sum(betas_ad[1,]*S1*vec_Itime_adav) + sum(betas_late[1,]*S1*vec_Ilate_av) + sum(betas_part[1,]*S1*vec_Itime_partav) - gamma_asym*E1 - gamma_sym*E1
+    dE2 <-  sum(betas_noav[2,]*S2*vec_Iall_noav) + sum(betas_asym[2,]*S2*vec_Iasym) + sum(betas_ad[2,]*S2*vec_Itime_adav) + sum(betas_late[2,]*S2*vec_Ilate_av) + sum(betas_part[2,]*S2*vec_Itime_partav) - gamma_asym*E2 - gamma_sym*E2
+    dE3 <-  sum(betas_noav[3,]*S3*vec_Iall_noav) + sum(betas_asym[3,]*S3*vec_Iasym) + sum(betas_ad[3,]*S3*vec_Itime_adav) + sum(betas_late[3,]*S3*vec_Ilate_av) + sum(betas_part[3,]*S3*vec_Itime_partav) - gamma_asym*E3 - gamma_sym*E3
+    dE4 <-  sum(betas_noav[4,]*S4*vec_Iall_noav) + sum(betas_asym[4,]*S4*vec_Iasym) + sum(betas_ad[4,]*S4*vec_Itime_adav) + sum(betas_late[4,]*S4*vec_Ilate_av) + sum(betas_part[4,]*S4*vec_Itime_partav) - gamma_asym*E4 - gamma_sym*E4
+    dE5 <-  sum(betas_noav[5,]*S5*vec_Iall_noav) + sum(betas_asym[5,]*S5*vec_Iasym) + sum(betas_ad[5,]*S5*vec_Itime_adav) + sum(betas_late[5,]*S5*vec_Ilate_av) + sum(betas_part[5,]*S5*vec_Itime_partav) - gamma_asym*E5 - gamma_sym*E5
     
     dIasym_udx1 = gamma_asym*E1 - rho_asym_r*Iasym_udx1                         # undiagnosed asymptomatic compartments
     dIasym_udx2 = gamma_asym*E2 - rho_asym_r*Iasym_udx2 
