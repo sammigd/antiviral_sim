@@ -23,22 +23,22 @@ epi_scenarios = names(scenario_tab)
 #transmis_scenarios = c('Low', 'High')
 #av_ie_scenarios = c(0, 50)
 
-nsim = 100
+nsim = 10
 #loop over scenarios of interest
 res = data.frame(matrix(NA_real_, nrow = 0, ncol = 7))
 res_ecurve = expand.grid(1:nsim, times, epi_scenarios)
 names(res_ecurve) = c('iter', 'times', 'epi_scenario')
 
 for (epi_scenario in epi_scenarios){
+  #epi_scenario = epi_scenarios[1]
   for(i in 1:nsim){
+    #i = 1   
     source('model_code/2_set_scenario_params.R')                     #set parameters matching the loop 
-    tmp_params = c(betas_noav, betas_late, betas_part, betas_ad,     #generate input list for the model fn
+    tmp_params = c(betas_noav, betas_av, betas_three,     #generate input list for the model fn
                    gamma_sym, gamma_asym,
-                   rho_asym_r, 
-                   rho_time_adav, rho_time_part, rho_time_noav,
-                   rho_late_av, rho_late_noav, rho_nocare_noav,
-                   mu_time_adav, mu_time_part, mu_time_noav,
-                   mu_late_av, mu_late_noav, mu_nocare_noav)
+                   rho_asym_r, rho_r, 
+                   rho_avzero, rho_avone, rho_avtwo, rho_avthree,
+                   mu_avzero, mu_avone, mu_avtwo, mu_avthree)
   
     #run model
     tmp_out = as.data.frame(ode(y=state0, times=times, func=flu.model, parms=tmp_params, method="lsodes"))
@@ -53,19 +53,19 @@ for (epi_scenario in epi_scenarios){
     #calc final size
     tmp_final_size = max(tmp_out_clean$R_all) #the biggest / final recovered count
     
-    tmp_out_clean$count_all_to_R = apply(tmp_out_clean[,c(57:91)], 1, sum)
-    tmp_out_clean$count_sym_to_R = apply(tmp_out_clean[,c(57:86)], 1, sum) #these are already cumulative
-    tmp_out_clean$count_asym_to_R = apply(tmp_out_clean[,c(87:91)], 1, sum)
-    tmp_out_clean$n = apply(tmp_out_clean[,c(2:56)], 1, sum)
+    tmp_out_clean$count_all_to_R = apply(tmp_out_clean[,c(47:76)], 1, sum)
+    tmp_out_clean$count_sym_to_R = apply(tmp_out_clean[,c(47:71)], 1, sum) #these are already cumulative
+    tmp_out_clean$count_asym_to_R = apply(tmp_out_clean[,c(72:76)], 1, sum)
+    tmp_out_clean$n = apply(tmp_out_clean[,c(2:46)], 1, sum)
     
     sym_final_size = max(tmp_out_clean$count_sym_to_R)
     
     #calc hosp and mort counts
     for(age in 1:5){
-      for (av in c('Itime_adav', 'Itime_part', 'Itime_noav', 'Ilate_av', 'Ilate_noav', 'Inocare_noav')){
+      for (av in c('Iavzero', 'Iavone', 'Iavtwo', 'Iavthree', 'Isym_udx')){
         hosp_var_name = paste0('hosp_', av, age)               # colname for new hosp count columns
         death_var_name = paste0('death_', av, age)
-        count_var_name = paste0('count_', av, age, '_to_R')    # colname for existing column with cumu transitions from I to R
+        count_var_name = paste0('count_', av, '_to_R', age)    # colname for existing column with cumu transitions from I to R
         multiplier_use = paste0(av, '_chr_multiplier')         # multiplier for chr tagged to av treatment group
         chr_use = chr_by_age_use[age]
         
@@ -73,7 +73,7 @@ for (epi_scenario in epi_scenarios){
       }
     }
     
-    total_hosp_a <- tmp_out_clean %>% summarise(across(hosp_Itime_adav1:hosp_Inocare_noav5, max))
+    total_hosp_a <- tmp_out_clean %>% summarise(across(hosp_Iavzero1:hosp_Isym_udx5, max))
     total_hosp_b <- sum(total_hosp_a) #sum across ages
   
     #deaths
@@ -83,10 +83,8 @@ for (epi_scenario in epi_scenarios){
     }
     total_death_b = sum(total_death) #sum across ages
     
-    # total av
-    total_av = sum(tmp_out_clean %>% summarise(across(count_Itime_adav1_to_R:count_Ilate_av5_to_R, max))) - 
-               sum(tmp_out_clean %>% summarise(across(count_Itime_noav1_to_R:count_Itime_noav5_to_R, max)))
-    
+    # total av - no longer accurate bc we arent counting ppl who seek care after day 3 who got av
+    total_av = sum(tmp_out_clean %>% summarise(across(count_Iavzero_to_R1:count_Iavthree_to_R5, max)))
     #populate df w results
     tmp_results = c(i, epi_scenario, tmp_final_size, sym_final_size, total_hosp_b, total_death_b, total_av)
     res = rbind(res, tmp_results)

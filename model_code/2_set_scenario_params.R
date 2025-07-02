@@ -100,10 +100,11 @@ p_sym_care_nonad = p_seekcare_avg * (p_d0 + p_d1 + p_d2 + p_d3) * p_prescribed *
 ################################################
 # RHOS - Isym to treatment classes and R #
 ################################################
-dur_inf = 3 
-pd_Isym_to_avzero = 0.5
-pd_Isym_to_avone = 1
-pd_Isym_to_avtwo = 2
+dur_pre_sym_inf = 0.7
+dur_inf = 3 + dur_pre_sym_inf
+pd_Isym_to_avzero = 0.5 + dur_pre_sym_inf
+pd_Isym_to_avone = 1 + dur_pre_sym_inf
+pd_Isym_to_avtwo = 2 + dur_pre_sym_inf
 pd_Isym_to_avthree = 2.5
 
 rho_avzero  = p_avzero  / pd_Isym_to_avzero
